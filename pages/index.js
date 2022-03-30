@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 
 export default function Home() {
-  const Waveform = dynamic(() => import('../components/Waveform'), {
+  const Waveform = dynamic(() => import('../components/WaveForm'), {
     ssr: false,
   });
   const [audioBlobs, setAudioBlobs] = useState([]);
