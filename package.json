@@ -9,12 +9,15 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.10.1",
     "next": "12.1.2",
     "react": "18.0.0",
-    "react-dom": "18.0.0"
+    "react-dom": "18.0.0",
+    "react-media-recorder": "^1.6.3",
+    "web-audio-daw": "^4.12.0"
   },
   "devDependencies": {
-    "eslint": "8.12.0",
+    "eslint": "^8.12.0",
     "eslint-config-next": "12.1.2"
   }
 }

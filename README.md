@@ -1,3 +1,17 @@
+Audio Editor Proof of Concept
+
+Key Features:
+
+- [ ] Audio recording
+- [ ] Audio upload from local files
+- [ ] Audio trim
+- [ ] Concat audios
+- [ ] Change audio parts order
+- [ ] Preview current audio state
+- [ ] Change playback speed
+- [ ] Audio recording
+
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
