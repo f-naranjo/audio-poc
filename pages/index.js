@@ -1,15 +1,43 @@
 import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 import { useReactMediaRecorder } from 'react-media-recorder';
-import { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 
 export default function Home() {
-  const [audioFiles, setAudioFiles] = useState([]);
-  const { status, startRecording, stopRecording, mediaBlobUrl } =
-    useReactMediaRecorder({
-      audio: true,
-      onStop: (data) => setAudioFiles([...audioFiles, data]),
-    });
+  const Waveform = dynamic(() => import('../components/Waveform'), {
+    ssr: false,
+  });
+  const [audioBlobs, setAudioBlobs] = useState([]);
+  const [masterAudio, setMasterAudio] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSaveAudio = async (data) => {
+    const blob = await fetch(data).then((r) => r.blob());
+    setAudioBlobs([...audioBlobs, blob]);
+  };
+
+  const { startRecording, stopRecording } = useReactMediaRecorder({
+    audio: true,
+    blobPropertyBag: {
+      type: 'audio/wav',
+    },
+    onStop: handleSaveAudio,
+  });
+
+  const handlePreview = async () => {
+    setIsLoading(true);
+
+    const concatRecordings = () => {
+      const blob = new Blob(audioBlobs);
+      // const url = URL.createObjectURL(blob);
+      // const audio = new Audio(url);
+      // audio.play();
+      setMasterAudio(blob);
+    };
+    concatRecordings();
+    setIsLoading(false);
+  };
 
   return (
     <div className={styles.container}>
@@ -25,14 +53,24 @@ export default function Home() {
           <p className={styles.description}>
             Let&apos;s start recording audio:
           </p>
-          <p>{status}</p>
           <button onClick={startRecording}>Start Recording</button>
           <button onClick={stopRecording}>Stop Recording</button>
           <div>
-            {audioFiles.length &&
-              audioFiles.map((audioFile) => (
-                <audio key={audioFile} src={audioFile} controls />
+            {audioBlobs.length >= 0 &&
+              audioBlobs.map((audioFile, idx) => (
+                <Waveform
+                  key={`wave-${idx}`}
+                  name={`wave-${idx}`}
+                  blob={audioFile}
+                />
               ))}
+          </div>
+          <div>
+            <p className={styles.description}>All audio files merged:</p>
+            <button onClick={handlePreview}>Listen preview</button>
+          </div>
+          <div>
+            {masterAudio && <Waveform blob={masterAudio} name="master" />}
           </div>
         </div>
       </main>
