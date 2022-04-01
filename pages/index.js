@@ -3,42 +3,61 @@ import styles from '../styles/Home.module.css';
 import { useReactMediaRecorder } from 'react-media-recorder';
 import React, { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
+import { FileInput } from '../components/FileInput';
+import { concatAudio, convertToMp3 } from '../utils/audio_utils';
 
 export default function Home() {
   const Waveform = dynamic(() => import('../components/WaveForm'), {
     ssr: false,
   });
-  const [audioBlobs, setAudioBlobs] = useState([]);
+
+  const [audioFiles, setAudioFiles] = useState([]);
   const [masterAudio, setMasterAudio] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSaveAudio = async (data) => {
     const blob = await fetch(data).then((r) => r.blob());
-    setAudioBlobs([...audioBlobs, blob]);
+    console.log('SAVE AUDIO', data, audioFiles);
+    const file = new File([blob], 'recordedAudio.mp3', { type: 'audio/mpeg' });
+    console.log('blob', blob, 'file', file);
+    const dataMp3 = await convertToMp3(file);
+    setAudioFiles([...audioFiles, dataMp3]);
+  };
+
+  const handleDrop = async (files) => {
+    console.log('DROP', files, audioFiles);
+    const mp3Files = await Promise.all(files.map((file) => convertToMp3(file)));
+    setAudioFiles((currentFiles) => [...currentFiles, ...mp3Files]);
   };
 
   const { startRecording, stopRecording } = useReactMediaRecorder({
     audio: true,
     blobPropertyBag: {
-      type: 'audio/wav',
+      type: 'audio/mpeg',
     },
     onStop: handleSaveAudio,
   });
 
   const handlePreview = async () => {
     setIsLoading(true);
-
-    const concatRecordings = () => {
-      const blob = new Blob(audioBlobs);
-      // const url = URL.createObjectURL(blob);
-      // const audio = new Audio(url);
-      // audio.play();
-      setMasterAudio(blob);
-    };
-    concatRecordings();
+    audioFiles.map((file) => console.log(file.type));
+    const audioBlobs = await Promise.all(
+      audioFiles.map((audioFile) => fetch(audioFile).then((r) => r.blob())),
+    );
+    console.log('LOS ARRAYS', audioBlobs, audioFiles);
+    // const concatRecordings = () => {
+    //   const blob = new Blob(audioBlobs, { type: 'audio/mpeg' });
+    //   // const url = URL.createObjectURL(blob);
+    //   // const audio = new Audio(url);
+    //   // audio.play();
+    //   console.log('resultado', blob.type);
+    //   setMasterAudio(blob);
+    // };
+    const blob = await concatAudio(audioBlobs);
+    setMasterAudio(blob);
     setIsLoading(false);
   };
-
+  console.log('OUT', audioFiles);
   return (
     <div className={styles.container}>
       <Head>
@@ -50,18 +69,22 @@ export default function Home() {
       <main className={styles.main}>
         <h1 className={styles.title}>Audio editor Proof of Concept</h1>
         <div>
+          <FileInput onChange={handleDrop} />
+        </div>
+        <div>
           <p className={styles.description}>
             Let&apos;s start recording audio:
           </p>
           <button onClick={startRecording}>Start Recording</button>
           <button onClick={stopRecording}>Stop Recording</button>
+
           <div>
-            {audioBlobs.length >= 0 &&
-              audioBlobs.map((audioFile, idx) => (
+            {audioFiles.length >= 0 &&
+              audioFiles.map((audioFile, idx) => (
                 <Waveform
                   key={`wave-${idx}`}
                   name={`wave-${idx}`}
-                  blob={audioFile}
+                  url={audioFile}
                 />
               ))}
           </div>
@@ -70,7 +93,7 @@ export default function Home() {
             <button onClick={handlePreview}>Listen preview</button>
           </div>
           <div>
-            {masterAudio && <Waveform blob={masterAudio} name="master" />}
+            {masterAudio && <Waveform url={masterAudio} name="master" />}
           </div>
         </div>
       </main>
