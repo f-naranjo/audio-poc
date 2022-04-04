@@ -14,3 +14,9 @@ a {
 * {
   box-sizing: border-box;
 }
+
+main > div {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}

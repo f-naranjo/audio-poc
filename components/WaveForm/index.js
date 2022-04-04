@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from 'react';
 import Wavesurfer from 'wavesurfer.js';
 import * as WaveformRegionsPlugin from 'wavesurfer.js/dist/plugin/wavesurfer.regions';
 
-const Waveform = ({ url, blob, name, ...props }) => {
+const Waveform = ({ url, blob, name, onDelete, onRegionSave, ...props }) => {
   const waveform = useRef(null);
   const [activeRegion, setActiveRegion] = useState(null);
 
@@ -67,6 +67,10 @@ const Waveform = ({ url, blob, name, ...props }) => {
     waveform.current.regions.list[activeRegion.id].play();
   };
 
+  const saveRegion = () => {
+    onRegionSave(activeRegion);
+  };
+
   const playAudio = () => {
     // Check if the audio is already playing
     if (waveform.current.isPlaying()) {
@@ -90,14 +94,22 @@ const Waveform = ({ url, blob, name, ...props }) => {
         <button style={{ margin: '4px' }} onClick={playAudio}>
           Play / Pause
         </button>
+        <button style={{ margin: '4px' }} onClick={onDelete}>
+          Delete clip
+        </button>
         {activeRegion && (
           <>
             <button style={{ margin: '4px' }} onClick={playClip}>
-              Play clip
+              Play region
             </button>
             <button style={{ margin: '4px' }} onClick={deleteClip}>
-              Delete clip
+              Delete region
             </button>
+            {onRegionSave && (
+              <button style={{ margin: '4px' }} onClick={saveRegion}>
+                Create new clip from region
+              </button>
+            )}
           </>
         )}
       </div>

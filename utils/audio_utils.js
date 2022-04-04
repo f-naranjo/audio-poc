@@ -6,7 +6,6 @@ const ffmpeg = createFFmpeg({
 });
 
 export const convertToMp3 = async (file) => {
-  console.log(file);
   const fileFullName = file?.name || 'rawAudio';
   const fileName = file?.name
     ? file.name.slice(0, file.name.length - 4)
@@ -14,28 +13,73 @@ export const convertToMp3 = async (file) => {
   const fileDestName = `${fileName}_converted.mp3`;
 
   const fileUrl = URL.createObjectURL(file);
+
   if (!ffmpeg.isLoaded()) {
     await ffmpeg.load();
   }
+
   ffmpeg.FS('writeFile', fileFullName, await fetchFile(fileUrl));
-  await ffmpeg.run('-i', fileFullName, fileDestName);
+
+  await ffmpeg.run('-i', fileFullName, '-acodec', 'libmp3lame', fileDestName);
+
   const data = ffmpeg.FS('readFile', fileDestName);
+
   return URL.createObjectURL(new Blob([data.buffer], { type: 'audio/mpeg' }));
 };
 
-export const concatAudio = async (audioFiles) => {
-  let proms = audioFiles.map(
-    (audioFile) =>
-      new Promise((resolve) => {
-        const fr = new FileReader();
-        fr.onloadend = () => resolve(fr.result);
-        fr.readAsArrayBuffer(audioFile);
-      }),
+export const ffmpegConcat = async (audioBlobs) => {
+  const audioFiles = audioBlobs.map((blob, idx) => {
+    const fileFromBlob = new File([blob], `recordedAudio${idx}.wav`, {
+      type: 'audio/wav',
+    });
+    return fileFromBlob;
+  });
+
+  if (!ffmpeg.isLoaded()) {
+    await ffmpeg.load();
+  }
+
+  for (let i = 0; i < audioFiles.length; i++) {
+    const fileUrl = URL.createObjectURL(audioFiles[i]);
+    ffmpeg.FS('writeFile', audioFiles[i].name, await fetchFile(fileUrl));
+  }
+
+  const allFileNames = audioFiles.map((file) => file.name).join('|');
+
+  await ffmpeg.run(
+    '-i',
+    `concat:${allFileNames}`,
+    '-c:a',
+    'libmp3lame',
+    'mergedAudio.mp3',
   );
+  const data = ffmpeg.FS('readFile', 'mergedAudio.mp3');
 
-  const audioFileBuffers = await Promise.all(proms);
+  return URL.createObjectURL(new Blob([data.buffer], { type: 'audio/mpeg' }));
+};
 
-  let blob = new Blob(audioFileBuffers);
-  const blobUrl = URL.createObjectURL(blob);
-  return blobUrl;
+export const trimAudio = async (blobUrl, options) => {
+  const { start, end } = options || {};
+
+  if (!ffmpeg.isLoaded()) {
+    await ffmpeg.load();
+  }
+
+  const startPoint = start;
+  const endPoint = end;
+
+  ffmpeg.FS('writeFile', 'audioToTrim.mp3', await fetchFile(blobUrl));
+
+  await ffmpeg.run(
+    '-ss',
+    `${startPoint}`,
+    '-i',
+    `audioToTrim.mp3`,
+    '-t',
+    `${endPoint - startPoint}`,
+    'audio_trimmed.mp3',
+  );
+  const data = ffmpeg.FS('readFile', 'audio_trimmed.mp3');
+
+  return URL.createObjectURL(new Blob([data], { type: 'audio/mpeg' }));
 };
