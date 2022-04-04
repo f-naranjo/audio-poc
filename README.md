@@ -24,7 +24,8 @@ Audio Editor Proof of Concept
 
 - Not tested with long audio files (>2 mins length).
 - Regions disappears when new audio is recorded (It may be related to state handling and Waveform component re render).
-- ffmpeg needs a little custom config to work properly (copy `dist` folder from the package into `public` to properly reference it).
+- ffmpeg needs a little custom config to work properly (copy `dist` folder from the package into `public` to properly reference it)
+- wavesurfer regions plugin also need custom setup for the import in order to work in production (see jsconfig.json)
 - Needs custom next.config.js to handle `sharedArrayBuffer` as seen on [Stackoverflow](https://stackoverflow.com/a/68630724).
 - It could be useful to review and refactor `Blob`, `Files` and `ObjectUrl` creation in order to optimize memory and cache.
 

@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from 'react';
 import Wavesurfer from 'wavesurfer.js';
-import * as WaveformRegionsPlugin from 'wavesurfer.js/dist/plugin/wavesurfer.regions';
+import * as WaveformRegionsPlugin from '@/wavesurfer/wavesurfer.regions';
 
 const Waveform = ({ url, blob, name, onDelete, onRegionSave, ...props }) => {
   const waveform = useRef(null);
